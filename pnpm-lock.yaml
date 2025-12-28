@@ -61,7 +61,7 @@ importers:
 
   packages/examples:
     dependencies:
-      '@atomic-web-agent/core':
+      '@binikingi/atomic-web-agent-core':
         specifier: workspace:*
         version: link:../agent-core
       '@langchain/anthropic':

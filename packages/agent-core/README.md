@@ -1,10 +1,10 @@
-# @atomic-web-agent/core
+# @binikingi/atomic-web-agent-core
 
 The core of the Atomic Web Agent, providing essential functionalities for AI-powered web interaction and automation.
 
 ## Overview
 
-`@atomic-web-agent/core` is a powerful library that combines the capabilities of [Playwright](https://playwright.dev/) for browser automation with [LangChain](https://js.langchain.com/) for AI agent orchestration. It enables you to create intelligent agents that can interact with web applications autonomously.
+`@binikingi/atomic-web-agent-core` is a powerful library that combines the capabilities of [Playwright](https://playwright.dev/) for browser automation with [LangChain](https://js.langchain.com/) for AI agent orchestration. It enables you to create intelligent agents that can interact with web applications autonomously.
 
 ## Features
 
@@ -17,19 +17,19 @@ The core of the Atomic Web Agent, providing essential functionalities for AI-pow
 ## Installation
 
 ```bash
-npm install @atomic-web-agent/core
+npm install @binikingi/atomic-web-agent-core
 ```
 
 or with pnpm:
 
 ```bash
-pnpm add @atomic-web-agent/core
+pnpm add @binikingi/atomic-web-agent-core
 ```
 
 ## Quick Start
 
 ```typescript
-import { AWAgent } from "@atomic-web-agent/core";
+import { AWAgent } from "@binikingi/atomic-web-agent-core";
 import { ChatAnthropic } from "@langchain/anthropic";
 
 // Initialize the model
@@ -80,16 +80,16 @@ new AWAgent(
 ### Exports
 
 ```typescript
-export { AWAgent } from "@atomic-web-agent/core";
-export { type PlaywrightPage } from "@atomic-web-agent/core";
-export { createTool } from "@atomic-web-agent/core";
-export { type AgentTool } from "@atomic-web-agent/core";
-export { ElementLocatorRegistry } from "@atomic-web-agent/core";
+export { AWAgent } from "@binikingi/atomic-web-agent-core";
+export { type PlaywrightPage } from "@binikingi/atomic-web-agent-core";
+export { createTool } from "@binikingi/atomic-web-agent-core";
+export { type AgentTool } from "@binikingi/atomic-web-agent-core";
+export { ElementLocatorRegistry } from "@binikingi/atomic-web-agent-core";
 export {
   type ElementSnapshot,
   type PageSnapshot,
   generateAccessibilitySnapshot,
-} from "@atomic-web-agent/core";
+} from "@binikingi/atomic-web-agent-core";
 ```
 
 ## Built-in Tools
@@ -109,7 +109,7 @@ The agent comes with several pre-configured tools:
 You can extend the agent with custom tools:
 
 ```typescript
-import { AWAgent, createTool } from "@atomic-web-agent/core";
+import { AWAgent, createTool } from "@binikingi/atomic-web-agent-core";
 
 const myCustomTool = (page: Page) =>
   createTool(

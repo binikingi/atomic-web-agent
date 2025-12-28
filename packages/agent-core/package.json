@@ -1,5 +1,5 @@
 {
-  "name": "@atomic-web-agent/core",
+  "name": "@binikingi/atomic-web-agent-core",
   "version": "1.0.0",
   "description": "The core of the Atomic Web Agent, providing essential functionalities for web interaction.",
   "main": "dist/index.js",
