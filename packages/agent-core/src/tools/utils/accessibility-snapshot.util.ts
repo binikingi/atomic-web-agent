@@ -134,10 +134,14 @@ async function enrichElement(
 
 /**
  * Generates an accessibility-based snapshot of the page with visual metadata
+ * @param page - The Playwright page to snapshot
+ * @param locatorMap - Map to store element locators
+ * @param extraTags - Optional array of additional HTML tags to include (e.g., ["p", "span", "h1"])
  */
 export async function generateAccessibilitySnapshot(
   page: Page,
-  locatorMap: Map<string, Locator>
+  locatorMap: Map<string, Locator>,
+  extraTags: string[] = []
 ): Promise<PageSnapshot> {
   // Reset counter for consistent IDs
   elementIdCounter = 0;
@@ -146,7 +150,7 @@ export async function generateAccessibilitySnapshot(
   locatorMap.clear();
 
   // Extract all interactive elements with XPath locators
-  const elementsData = await page.evaluate(() => {
+  const elementsData = await page.evaluate((additionalTags: string[]) => {
     const results: Array<{
       xpath: string;
       role: string;
@@ -213,6 +217,22 @@ export async function generateAccessibilitySnapshot(
       if (tagName === "nav") return "navigation";
       if (tagName === "main") return "main";
       if (tagName === "dialog") return "dialog";
+
+      // Text content elements
+      if (tagName === "p") return "paragraph";
+      if (tagName === "span") return "text";
+      if (tagName === "div") return "text";
+      if (tagName === "h1") return "heading";
+      if (tagName === "h2") return "heading";
+      if (tagName === "h3") return "heading";
+      if (tagName === "h4") return "heading";
+      if (tagName === "h5") return "heading";
+      if (tagName === "h6") return "heading";
+      if (tagName === "label") return "label";
+      if (tagName === "li") return "listitem";
+      if (tagName === "ul") return "list";
+      if (tagName === "ol") return "list";
+
       return "generic";
     }
 
@@ -243,11 +263,21 @@ export async function generateAccessibilitySnapshot(
         }
       }
 
+      // For text elements (p, span, div, headings), return text content
+      const tagName = element.tagName.toLowerCase();
+      if (
+        ["p", "span", "div", "h1", "h2", "h3", "h4", "h5", "h6", "label", "li"].includes(
+          tagName
+        )
+      ) {
+        return (element.textContent || "").trim().substring(0, 200);
+      }
+
       return "";
     }
 
     // Find all interactive elements
-    const selectors = [
+    const baseSelectors = [
       "button",
       "a[href]",
       "input",
@@ -261,6 +291,9 @@ export async function generateAccessibilitySnapshot(
       "[role='combobox']",
       "[onclick]",
     ];
+
+    // Add additional tags if provided
+    const selectors = [...baseSelectors, ...additionalTags];
 
     const elements = document.querySelectorAll(selectors.join(", "));
 
@@ -314,7 +347,7 @@ export async function generateAccessibilitySnapshot(
     });
 
     return results;
-  });
+  }, extraTags);
 
   // Get viewport size
   const viewportSize = page.viewportSize() || { width: 1280, height: 800 };

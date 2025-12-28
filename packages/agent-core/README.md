@@ -1,10 +1,10 @@
-# @binikingi/atomic-web-agent-core
+# @bini-bar-labs/atomic-web-agent-core
 
 The core of the Atomic Web Agent, providing essential functionalities for AI-powered web interaction and automation.
 
 ## Overview
 
-`@binikingi/atomic-web-agent-core` is a powerful library that combines the capabilities of [Playwright](https://playwright.dev/) for browser automation with [LangChain](https://js.langchain.com/) for AI agent orchestration. It enables you to create intelligent agents that can interact with web applications autonomously.
+`@bini-bar-labs/atomic-web-agent-core` is a powerful library that combines the capabilities of [Playwright](https://playwright.dev/) for browser automation with [LangChain](https://js.langchain.com/) for AI agent orchestration. It enables you to create intelligent agents that can interact with web applications autonomously.
 
 ## Features
 
@@ -17,19 +17,19 @@ The core of the Atomic Web Agent, providing essential functionalities for AI-pow
 ## Installation
 
 ```bash
-npm install @binikingi/atomic-web-agent-core
+npm install @bini-bar-labs/atomic-web-agent-core
 ```
 
 or with pnpm:
 
 ```bash
-pnpm add @binikingi/atomic-web-agent-core
+pnpm add @bini-bar-labs/atomic-web-agent-core
 ```
 
 ## Quick Start
 
 ```typescript
-import { AWAgent } from "@binikingi/atomic-web-agent-core";
+import { AWAgent } from "@bini-bar-labs/atomic-web-agent-core";
 import { ChatAnthropic } from "@langchain/anthropic";
 
 // Initialize the model
@@ -49,6 +49,37 @@ await agent.init();
 await agent.run("Navigate to https://example.com and take a screenshot");
 await agent.close();
 ```
+
+## Page Validation
+
+The `test()` method enables you to validate conditions on the current webpage using natural language. It returns `true` if the condition is met, `false` otherwise.
+
+```typescript
+// Example: Check if user is logged in
+const isLoggedIn = await agent.test("The user is logged in");
+console.log(isLoggedIn); // true or false
+
+// Example: Verify form validation
+const hasError = await agent.test("An error message is displayed");
+
+// Example: Check element state
+const isButtonDisabled = await agent.test("The submit button is disabled");
+
+// Example: Verify content presence
+const hasWelcomeMessage = await agent.test("A welcome message appears on the page");
+
+// Example: Complex state validation
+const isCheckoutReady = await agent.test(
+  "The shopping cart has items and the checkout button is clickable"
+);
+```
+
+### Best Practices for test() Conditions
+
+- **Be specific and measurable**: "The login button is visible" is better than "The page looks good"
+- **Focus on observable state**: Describe what should be visible or present on the page
+- **Avoid subjective interpretations**: Use concrete, verifiable conditions
+- **Keep it atomic**: Test one condition at a time for clearer results
 
 ## API Reference
 
@@ -75,21 +106,23 @@ new AWAgent(
 
 - `init(launchOptions?: LaunchOptions, contextOptions?: BrowserContextOptions): Promise<void>` - Initialize the browser and agent
 - `run(message: string): Promise<void>` - Execute a task with the agent
+- `test(condition: string): Promise<boolean>` - Validate a condition on the current page and return true/false
 - `close(): Promise<void>` - Close the browser and clean up resources
 
 ### Exports
 
 ```typescript
-export { AWAgent } from "@binikingi/atomic-web-agent-core";
-export { type PlaywrightPage } from "@binikingi/atomic-web-agent-core";
-export { createTool } from "@binikingi/atomic-web-agent-core";
-export { type AgentTool } from "@binikingi/atomic-web-agent-core";
-export { ElementLocatorRegistry } from "@binikingi/atomic-web-agent-core";
+export { AWAgent } from "@bini-bar-labs/atomic-web-agent-core";
+export { type PlaywrightPage } from "@bini-bar-labs/atomic-web-agent-core";
+export { createTool } from "@bini-bar-labs/atomic-web-agent-core";
+export { type AgentTool } from "@bini-bar-labs/atomic-web-agent-core";
+export { ElementLocatorRegistry } from "@bini-bar-labs/atomic-web-agent-core";
+export { validateConditionTool } from "@bini-bar-labs/atomic-web-agent-core";
 export {
   type ElementSnapshot,
   type PageSnapshot,
   generateAccessibilitySnapshot,
-} from "@binikingi/atomic-web-agent-core";
+} from "@bini-bar-labs/atomic-web-agent-core";
 ```
 
 ## Built-in Tools
@@ -100,16 +133,40 @@ The agent comes with several pre-configured tools:
 - **Click**: Click elements by ID or position
 - **Input**: Type text into input fields
 - **Screenshot**: Capture page screenshots
-- **DOM Snapshot**: Get accessibility-based page structure
+- **DOM Snapshot**: Get accessibility-based page structure (with optional extra tags)
 - **Wait**: Wait for specified durations
 - **Console Print**: Output messages to console
+- **Validation**: Return validation results (used by `test()` method)
+
+### DOM Snapshot with Custom Elements
+
+The DOM Snapshot tool is intelligent and can include additional HTML elements beyond the default interactive elements. The AI can request specific tags to be included in the snapshot.
+
+**How it works:**
+- By default, the snapshot includes only interactive elements (buttons, inputs, links, etc.)
+- The AI can specify additional HTML tags to include using the `extraTags` parameter
+- This is useful for validation tasks that need to examine text content or specific elements
+
+**Example use case:**
+When you ask the agent to validate text content on a page, the AI will automatically:
+1. Call `GetDOMSnapshot` with `extraTags: ["p", "span", "h1", "h2"]`
+2. Receive a snapshot that includes both interactive elements AND the specified text elements
+3. Validate the condition based on the complete snapshot
+
+**Common tags the AI might request:**
+- Text content: `p`, `span`, `div`
+- Headings: `h1`, `h2`, `h3`, `h4`, `h5`, `h6`
+- Lists: `li`, `ul`, `ol`
+- Labels: `label`
+
+This feature enables more accurate validation and interaction with webpage content without overwhelming the context with unnecessary elements.
 
 ## Custom Tools
 
 You can extend the agent with custom tools:
 
 ```typescript
-import { AWAgent, createTool } from "@binikingi/atomic-web-agent-core";
+import { AWAgent, createTool } from "@bini-bar-labs/atomic-web-agent-core";
 
 const myCustomTool = (page: Page) =>
   createTool(

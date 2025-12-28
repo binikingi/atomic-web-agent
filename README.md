@@ -12,7 +12,7 @@ This project is organized as a monorepo with two main packages:
 
 ### 📦 Packages
 
-#### `@binikingi/atomic-web-agent-core`
+#### `@bini-bar-labs/atomic-web-agent-core`
 The core package provides the foundational framework for building AI-powered web automation agents.
 
 **Key Features:**
@@ -33,7 +33,7 @@ The core package provides the foundational framework for building AI-powered web
 - `Wait` - Wait for specified duration
 - `PrintToConsole` - Output information
 
-#### `@binikingi/atomic-web-agent-examples`
+#### `@bini-bar-labs/atomic-web-agent-examples`
 Example implementations and custom agents built using the core package.
 
 ## Installation
@@ -51,7 +51,7 @@ pnpm build
 ### Basic Example
 
 ```typescript
-import { AWAgent } from "@binikingi/atomic-web-agent-core";
+import { AWAgent } from "@bini-bar-labs/atomic-web-agent-core";
 import { ChatOpenAI } from "@langchain/openai";
 
 // Create a model
@@ -86,7 +86,7 @@ await agent.close();
 ### Advanced Example with Custom Tools
 
 ```typescript
-import { AWAgent, createTool } from "@binikingi/atomic-web-agent-core";
+import { AWAgent, createTool } from "@bini-bar-labs/atomic-web-agent-core";
 import { ChatAnthropic } from "@langchain/anthropic";
 import type { Page } from "playwright";
 
@@ -122,7 +122,7 @@ const agent = new AWAgent(model, systemMessage, {
 ### Mobile Web App Example
 
 ```typescript
-import { AWAgent } from "@binikingi/atomic-web-agent-core";
+import { AWAgent } from "@bini-bar-labs/atomic-web-agent-core";
 import { ChatOpenAI } from "@langchain/openai";
 
 const model = new ChatOpenAI({
@@ -230,7 +230,7 @@ The `exmaples` package includes example implementations:
 pnpm build
 
 # Run the mobile clock-in example
-pnpm --filter @binikingi/atomic-web-agent-examples start
+pnpm --filter @bini-bar-labs/atomic-web-agent-examples start
 ```
 
 ## Development
@@ -275,7 +275,7 @@ pnpm build-watch
 You can create custom tools using the `createTool` function from LangChain:
 
 ```typescript
-import { createTool, type PlaywrightPage } from "@binikingi/atomic-web-agent-core";
+import { createTool, type PlaywrightPage } from "@bini-bar-labs/atomic-web-agent-core";
 import z from "zod";
 
 export function myCustomTool(page: PlaywrightPage) {

@@ -6,9 +6,10 @@ await mobileDocumentAgent.init("chromium", {
   launchOptions: { headless: false },
 });
 const page = mobileDocumentAgent.getCurrentPage();
-await page.goto("https://google.com");
-await mobileDocumentAgent.do(
-  "Enter in the search box the term 'what is Agentic AI?'"
+await page.goto("https://www.time.gov/");
+const result = await mobileDocumentAgent.test(
+  "Check if time in Alaska is before 10AM"
 );
+console.log("time is before 10am?:", result);
 await mobileDocumentAgent.close();
 console.timeEnd("runTime");

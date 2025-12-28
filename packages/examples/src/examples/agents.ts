@@ -2,7 +2,7 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
 import dedent from "dedent";
 import { env } from "../env.js";
-import { AWAgent } from "@binikingi/atomic-web-agent-core";
+import { AWAgent } from "@bini-bar-labs/atomic-web-agent-core";
 
 const systemMessage = dedent`
     You are a helpfull web automation agent
