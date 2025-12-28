@@ -5,13 +5,50 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "dist/**/*.js.map",
+    "!dist/**/*.spec.*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "lint": "eslint 'src/**/*.ts'",
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "prepublishOnly": "pnpm build"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "ai",
+    "agent",
+    "web-automation",
+    "playwright",
+    "langchain",
+    "browser-automation",
+    "web-scraping",
+    "ai-agent"
+  ],
+  "author": "Bini Barazany <bgt636@gmail.com>",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/binikingi/atomic-web-agent.git",
+    "directory": "packages/agent-core"
+  },
+  "bugs": {
+    "url": "https://github.com/binikingi/atomic-web-agent/issues"
+  },
+  "homepage": "https://github.com/binikingi/atomic-web-agent#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "tsx": "4.20.6"
   },
