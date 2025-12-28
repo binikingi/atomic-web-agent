@@ -15,17 +15,18 @@ import {
   type LaunchOptions,
   type Page,
 } from "playwright";
+import { clickByElementIdTool } from "../tools/click-by-element-id.tool.js";
 import { clickByPositionTool } from "../tools/click-by-position.tool.js";
-import { clickBySelectorTool } from "../tools/click-by-selector.tool.js";
 import { getDOMSnapshotTool } from "../tools/get-DOM-snapshot.tool.js";
 import { getPageScreenShotTool } from "../tools/get-page-screenshot.tool.js";
-import { inputTool } from "../tools/input.tool.js";
+import { inputByElementIdTool } from "../tools/input-by-element-id.tool.js";
 import { navigateTool } from "../tools/navigate.tool.js";
+import { printToConsoleTool } from "../tools/print-to-console.tool.js";
+import { ElementLocatorRegistry } from "../tools/utils/element-registry.util.js";
 import { waitTool } from "../tools/wait.tool.js";
+import type { AgentTool } from "./AWAgent.types.js";
 import { loggingMiddleware } from "./middlewares/logging-calls.middleware.js";
 import { trimMessagesHistoryMiddleware } from "./middlewares/trim-messages-history.middleware.js";
-import { printToConsoleTool } from "../tools/print-to-console.tool.js";
-import type { AgentTool } from "./AWAgent.types.js";
 
 export class AWAgent {
   private browser: Browser | null = null;
@@ -35,8 +36,12 @@ export class AWAgent {
   private model: ChatAnthropic | ChatOpenAI;
   private agent: ReactAgent | null = null;
   private systemMessage: SystemMessage;
+  private elementRegistry: ElementLocatorRegistry;
   private overrideTools: {
-    getDOMSnapshotTool?: (page: Page) => AgentTool;
+    getDOMSnapshotTool?: (
+      page: Page,
+      registry: ElementLocatorRegistry
+    ) => AgentTool;
   };
   private customTools: ((page: Page) => AgentTool)[];
 
@@ -46,12 +51,16 @@ export class AWAgent {
     options?: {
       customTools?: ((page: Page) => Tool)[];
       overrideTools?: {
-        getDOMSnapshotTool?: (page: Page) => AgentTool;
+        getDOMSnapshotTool?: (
+          page: Page,
+          registry: ElementLocatorRegistry
+        ) => AgentTool;
       };
     }
   ) {
     this.model = model;
     this.systemMessage = new SystemMessage(systemMessage);
+    this.elementRegistry = new ElementLocatorRegistry();
     this.overrideTools = options?.overrideTools ?? {};
     this.customTools = options?.customTools ?? [];
   }
@@ -136,9 +145,13 @@ export class AWAgent {
 
   private createTools(page: Page): AgentTool[] {
     return [
-      clickBySelectorTool(page),
-      inputTool(page),
-      this.overrideTools.getDOMSnapshotTool?.(page) ?? getDOMSnapshotTool(page),
+      // Element ID-based tools (recommended for use with accessibility snapshots)
+      clickByElementIdTool(page, this.elementRegistry),
+      inputByElementIdTool(page, this.elementRegistry),
+      // Snapshot tool with element registry integration
+      this.overrideTools.getDOMSnapshotTool?.(page, this.elementRegistry) ??
+        getDOMSnapshotTool(page, this.elementRegistry),
+      // Other utility tools
       waitTool(),
       navigateTool(page),
       getPageScreenShotTool(page),
