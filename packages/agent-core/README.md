@@ -81,6 +81,81 @@ const isCheckoutReady = await agent.test(
 - **Avoid subjective interpretations**: Use concrete, verifiable conditions
 - **Keep it atomic**: Test one condition at a time for clearer results
 
+## Data Extraction
+
+The `extract()` method enables you to extract structured data from webpages using Zod schemas. It returns typed data that matches your schema.
+
+```typescript
+import { z } from "zod";
+
+// Define your data schema
+const productSchema = z.object({
+  title: z.string().describe("The product title"),
+  price: z.number().describe("The product price in dollars"),
+  description: z.string().describe("The product description"),
+  inStock: z.boolean().describe("Whether the product is in stock"),
+  rating: z.number().optional().describe("Product rating out of 5"),
+});
+
+type Product = z.infer<typeof productSchema>;
+
+// Extract data from the page
+const product = await agent.extract<Product>(
+  productSchema,
+  "Extract product information from this page"
+);
+
+console.log(product);
+// { title: "...", price: 99.99, description: "...", inStock: true, rating: 4.5 }
+```
+
+### More Examples
+
+```typescript
+// Extract multiple items (array)
+const itemsSchema = z.object({
+  items: z.array(
+    z.object({
+      name: z.string(),
+      price: z.number(),
+    })
+  ),
+});
+
+const data = await agent.extract(itemsSchema);
+
+// Extract user profile
+const profileSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  age: z.number().optional(),
+  isVerified: z.boolean(),
+});
+
+const profile = await agent.extract(profileSchema);
+
+// Extract with custom instructions
+const statsSchema = z.object({
+  visitors: z.number(),
+  pageViews: z.number(),
+  bounceRate: z.number(),
+});
+
+const stats = await agent.extract(
+  statsSchema,
+  "Look for the analytics dashboard section and extract the key metrics displayed"
+);
+```
+
+### Features
+
+- **Type-safe**: Full TypeScript support with automatic type inference
+- **Schema validation**: Extracted data is validated against your Zod schema
+- **Native structured output**: Uses LangChain's `providerStrategy` for efficient extraction via model provider's native structured output capability
+- **Automatic field detection**: AI determines how to extract each field
+- **Flexible**: Works with complex nested schemas
+- **Error handling**: Clear validation errors if data doesn't match schema
+
 ## API Reference
 
 ### AWAgent
@@ -107,6 +182,7 @@ new AWAgent(
 - `init(launchOptions?: LaunchOptions, contextOptions?: BrowserContextOptions): Promise<void>` - Initialize the browser and agent
 - `run(message: string): Promise<void>` - Execute a task with the agent
 - `test(condition: string): Promise<boolean>` - Validate a condition on the current page and return true/false
+- `extract<T>(schema: z.ZodSchema<T>, instructions?: string): Promise<T>` - Extract structured data from the page using a Zod schema
 - `close(): Promise<void>` - Close the browser and clean up resources
 
 ### Exports
@@ -118,6 +194,7 @@ export { createTool } from "@bini-bar-labs/atomic-web-agent-core";
 export { type AgentTool } from "@bini-bar-labs/atomic-web-agent-core";
 export { ElementLocatorRegistry } from "@bini-bar-labs/atomic-web-agent-core";
 export { validateConditionTool } from "@bini-bar-labs/atomic-web-agent-core";
+export { extractDataTool } from "@bini-bar-labs/atomic-web-agent-core";
 export {
   type ElementSnapshot,
   type PageSnapshot,
@@ -137,6 +214,8 @@ The agent comes with several pre-configured tools:
 - **Wait**: Wait for specified durations
 - **Console Print**: Output messages to console
 - **Validation**: Return validation results (used by `test()` method)
+
+Note: The `extract()` method uses native structured output via LangChain's `providerStrategy` rather than a custom tool, allowing for more efficient data extraction directly from the model provider.
 
 ### DOM Snapshot with Custom Elements
 

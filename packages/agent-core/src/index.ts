@@ -9,3 +9,4 @@ export {
   generateAccessibilitySnapshot,
 } from "./tools/utils/accessibility-snapshot.util.js";
 export { validateConditionTool } from "./tools/validate-condition.tool.js";
+export { extractDataTool } from "./tools/extract-data.tool.js";

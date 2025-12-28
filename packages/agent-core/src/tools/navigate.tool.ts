@@ -12,7 +12,7 @@ export function navigateTool(page: Page) {
       name: "NavigateToURL",
       description: "Navigate to a specified URL",
       schema: z.object({
-        url: z.string().url().describe("The URL to navigate to"),
+        url: z.string().describe("The URL to navigate to (e.g., https://example.com)"),
       }),
     }
   );

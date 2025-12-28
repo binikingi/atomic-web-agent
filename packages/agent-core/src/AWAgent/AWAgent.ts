@@ -1,14 +1,15 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
 import {
+  AIMessage,
+  type BaseMessage,
   createAgent,
   HumanMessage,
+  providerStrategy,
   type ReactAgent,
   SystemMessage,
   Tool,
-  type BaseMessage,
   ToolMessage,
-  AIMessage,
 } from "langchain";
 import {
   type Browser,
@@ -18,15 +19,15 @@ import {
   type LaunchOptions,
   type Page,
 } from "playwright";
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { clickByElementIdTool } from "../tools/click-by-element-id.tool.js";
-import { clickByPositionTool } from "../tools/click-by-position.tool.js";
 import { getDOMSnapshotTool } from "../tools/get-DOM-snapshot.tool.js";
-import { getPageScreenShotTool } from "../tools/get-page-screenshot.tool.js";
 import { inputByElementIdTool } from "../tools/input-by-element-id.tool.js";
 import { navigateTool } from "../tools/navigate.tool.js";
 import { printToConsoleTool } from "../tools/print-to-console.tool.js";
-import { validateConditionTool } from "../tools/validate-condition.tool.js";
 import { ElementLocatorRegistry } from "../tools/utils/element-registry.util.js";
+import { validateConditionTool } from "../tools/validate-condition.tool.js";
 import { waitTool } from "../tools/wait.tool.js";
 import type { AgentTool } from "./AWAgent.types.js";
 import { loggingMiddleware } from "./middlewares/logging-calls.middleware.js";
@@ -116,10 +117,29 @@ export class AWAgent {
     if (!this.agent) {
       const tools = this.createTools(this.currentPageContext);
 
+      // Enhance system message with behavioral guidelines
+      const baseMessage = typeof this.systemMessage.content === "string"
+        ? this.systemMessage.content
+        : JSON.stringify(this.systemMessage.content);
+
+      const enhancedSystemPrompt = new SystemMessage(
+        `${baseMessage}
+
+IMPORTANT BEHAVIORAL GUIDELINES:
+1. You are operating on a browser page. ALWAYS start by using GetDOMSnapshot to see what page you're currently on and what's available.
+2. Be PROACTIVE and take ACTION immediately. Do NOT ask the user clarifying questions unless absolutely necessary.
+3. If you're already on a website and the user asks to navigate to a section (e.g., "go to men's shoes"), use the available page elements to navigate within the current site.
+4. Use ClickByElementId to click on links, buttons, or navigation elements that match the user's intent.
+5. If you need more context about the page, use GetDOMSnapshot with extra tags like ["a", "nav", "h1", "h2"] to see navigation links and headings.
+6. Only use NavigateToURL if you need to go to a completely different website with a specific URL.
+7. Execute the task directly based on what you observe on the page. Be decisive.
+8. If you cannot complete the task with the available tools and page elements, explain why clearly.`
+      );
+
       const agent = createAgent({
         model: this.model,
         tools: tools,
-        systemPrompt: this.systemMessage,
+        systemPrompt: enhancedSystemPrompt,
         middleware: [loggingMiddleware, trimMessagesHistoryMiddleware],
       });
       this.agent = agent;
@@ -179,6 +199,60 @@ Your final action MUST be to call ReturnValidationResult. Do not continue after 
     const result = this.extractValidationResult(response.messages);
 
     return result;
+  }
+
+  async extract<T>(instructions: string, schema: z.ZodSchema<T>): Promise<T> {
+    if (!this.currentPageContext) {
+      throw new Error("Agent is not initialized");
+    }
+
+    // Create tools for extraction (without the extractDataTool)
+    const extractionTools = this.createTools(this.currentPageContext);
+
+    // Generate schema description for the AI
+    const schemaDescription = this.generateSchemaDescription(schema);
+
+    const extractionSystemPrompt = new SystemMessage(
+      `You are a webpage data extraction agent. Your task is to extract structured data from the current webpage according to a specific schema.
+
+Instructions:
+1. Use GetDOMSnapshot to examine the page structure. Include extra tags if needed (e.g., ["p", "span", "h1"] for text content)
+2. If needed, use GetPageScreenShot for visual confirmation
+3. Analyze the page content and extract the required data fields according to the schema
+4. Return the extracted data in your final response
+
+Additional instructions: ${instructions}\n\n
+Data Schema: ${schemaDescription}
+
+Be precise and accurate. Extract only the data that is clearly present on the page.
+If a field is not found or cannot be determined, use null for optional fields or your best judgment for required fields.`
+    );
+
+    const extractionAgent = createAgent({
+      model: this.model,
+      tools: extractionTools,
+      systemPrompt: extractionSystemPrompt,
+      // No middleware - incompatible with structured output (providerStrategy)
+      responseFormat: providerStrategy(schema),
+    });
+
+    const response = await extractionAgent.invoke(
+      {
+        messages: [
+          new HumanMessage(
+            `Extract data from the current page according to the schema.`
+          ),
+        ],
+      },
+      {
+        recursionLimit: 15, // Limit iterations to prevent infinite loops
+      }
+    );
+
+    // Extract the structured output from the response
+    const extractedData = this.extractStructuredOutput(response, schema);
+
+    return extractedData;
   }
 
   async close() {
@@ -243,6 +317,69 @@ Your final action MUST be to call ReturnValidationResult. Do not continue after 
     );
   }
 
+  private generateSchemaDescription(schema: z.ZodSchema): string {
+    // Convert Zod schema to JSON Schema for a clear, standard representation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+    const jsonSchema = zodToJsonSchema(schema as any, "extractionSchema");
+    return JSON.stringify(jsonSchema, null, 2);
+  }
+
+  private extractStructuredOutput<T>(
+    response: { messages: BaseMessage[] },
+    schema: z.ZodSchema<T>
+  ): T {
+    // With providerStrategy, the structured output should be in the last message
+    const lastMessage = response.messages[response.messages.length - 1];
+
+    if (lastMessage instanceof AIMessage) {
+      try {
+        // The structured output is typically in message.content or message.additional_kwargs
+        let structuredData: unknown;
+
+        // Check if content is already an object (structured output)
+        if (
+          typeof lastMessage.content === "object" &&
+          lastMessage.content !== null
+        ) {
+          structuredData = lastMessage.content;
+        }
+        // Check additional_kwargs for structured output
+        else if (lastMessage.additional_kwargs?.structured_output) {
+          structuredData = lastMessage.additional_kwargs.structured_output;
+        }
+        // Try parsing content as JSON
+        else if (typeof lastMessage.content === "string") {
+          try {
+            structuredData = JSON.parse(lastMessage.content);
+          } catch {
+            throw new Error("Could not parse structured output from response");
+          }
+        }
+
+        // Validate the extracted data against the schema
+        const validatedData = schema.parse(structuredData);
+        console.log("Data extracted and validated successfully");
+        return validatedData;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const errorMessages = error.issues
+            .map((e) => `${e.path.join(".")}: ${e.message}`)
+            .join(", ");
+          throw new Error(`Extracted data validation failed: ${errorMessages}`);
+        }
+        throw new Error(
+          `Failed to extract structured output: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    }
+
+    throw new Error(
+      "No structured output found in agent response. Expected an AI message with structured data."
+    );
+  }
+
   private createTools(page: Page): AgentTool[] {
     return [
       // Element ID-based tools (recommended for use with accessibility snapshots)
@@ -254,8 +391,8 @@ Your final action MUST be to call ReturnValidationResult. Do not continue after 
       // Other utility tools
       waitTool(),
       navigateTool(page),
-      getPageScreenShotTool(page),
-      clickByPositionTool(page),
+      // getPageScreenShotTool(page),
+      // clickByPositionTool(page),
       printToConsoleTool(),
       ...this.customTools.map((buildTool) => buildTool(page)),
     ];

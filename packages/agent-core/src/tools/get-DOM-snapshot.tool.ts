@@ -58,9 +58,9 @@ Common tags you might want to include:
       schema: z.object({
         extraTags: z
           .array(z.string())
-          .optional()
+          .default([])
           .describe(
-            "Optional array of additional HTML tag names to include in the snapshot (e.g., ['p', 'span', 'h1'])"
+            "Optional array of additional HTML tag names to include in the snapshot (e.g., ['p', 'span', 'h1']). Defaults to empty array."
           ),
       }),
     }
