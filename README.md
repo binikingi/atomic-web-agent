@@ -223,7 +223,7 @@ await agent.close();
 
 ## Running Examples
 
-The `medflyt-agents` package includes example implementations:
+The `exmaples` package includes example implementations:
 
 ```bash
 # Build the project
@@ -247,10 +247,9 @@ atomic-web-agent/
 │   │   │   └── index.ts      # Package exports
 │   │   └── package.json
 │   │
-│   └── medflyt-agents/       # Example implementations
+│   └── examples/       # Example implementations
 │       ├── src/
 │       │   ├── examples/     # Example agents
-│       │   └── lib/          # Reusable flows
 │       └── package.json
 │
 ├── package.json              # Root package
@@ -301,7 +300,7 @@ export function myCustomTool(page: PlaywrightPage) {
 
 ## Environment Variables
 
-Create a `.env` file in the `packages/medflyt-agents` directory:
+Create a `.env` file in the `packages/examples` directory:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
@@ -310,7 +309,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
 ## Requirements
 
-- Node.js 18+
+- Node.js 22+
 - pnpm 9+
 - TypeScript 5+
 
