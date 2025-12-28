@@ -1,0 +1,27 @@
+{
+  "name": "atomic-web-agent",
+  "version": "1.0.0",
+  "description": "And AI agent that can interact with web applications using Playwright and LangChain.",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "build": "pnpm -r build",
+    "build-watch": "pnpm -r watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@9.12.0+sha256.a61b67ff6cc97af864564f4442556c22a04f2e5a7714fbee76a1011361d9b726",
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "jiti": "^2.6.1",
+    "typescript-eslint": "^8.48.0"
+  }
+}
